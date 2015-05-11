@@ -1,0 +1,227 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>API reference</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/ApiReference.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="index.html">Home</a>
+    <a href="tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<h2>API reference</h2>
+<p>Table of contents</p>
+<h3>Overview</h3>
+<p>The following declaration</p>
+<pre>#include &lt;enum.h&gt;
+ENUM(Enum, underlying_type, A, B, C, ...);</pre><p>generates a new type <code>Enum</code>. It is notionally similar to the type created by
+this <span class="cpp">C++</span><span class="eleven">11</span> declaration:</p>
+<pre>enum class Enum : underlying_type {A, B, C, ...};</pre><p>that is, <code>Enum</code> is a scoped enumerated type with constants <code>Enum::A</code>, <code>Enum::B</code>,
+<code>Enum::C</code>, and so on, with memory representation the same as <code>underlying_type</code>.
+It is possible to supply initializers for any of the constants:</p>
+<pre>ENUM(Enum, underlying_type, A = 1, B = constant_expression, C, ...);</pre><p>The initializers have the same meaning and constraints as in an <code>enum class</code>
+declaration.</p>
+<p>The principal differences between the types declared by the <code>ENUM</code> macro and
+<code>enum class</code> are:</p>
+<ul>
+<li><code>ENUM</code> is available for <span class="cpp">C++</span><span class="eleven">98</span> for compilers supporting <code>__VA_ARGS__</code>,</li>
+<li>the <code>ENUM</code> type is implicitly convertible to integral types, though this can
+be disabled when using <span class="cpp">C++</span><span class="eleven">11</span>, <a href="">How</a> and</li>
+<li>the <code>ENUM</code> type supports a set of reflective operations, detailed in the
+rest of this reference.</li>
+</ul>
+<p>The types produced by the <code>ENUM</code> macro are sometimes called Better Enums in the
+rest of this reference, and the running example declaration is</p>
+<pre>ENUM(Enum, int, A, B, C);</pre><p>For the purposes of argument passing, Better Enums should be thought of as
+equivalent to their underlying type. This means that Better Enums are typically
+integers that fit into a register or a stack word, and should be passed by
+value.</p>
+<p>All names declared in the scope of a Better Enum are prefixed with an underscore
+in order to avoid conflicts with potential constant names.</p>
+<h3>General</h3>
+<h4>typedef _enumerated</h4>
+<p>An internal type used to declare constants. <code>ENUM</code> generates something similar
+to</p>
+<pre>struct Enum {
+    enum _enumerated : int { A, B, C };
+    // ...
+};</pre><p>The user needs to be aware of this type in only one situation. A literal constant
+such as <code>Enum::A</code> is an expression of type <code>Enum::_enumerated</code>, not <code>Enum</code>. It
+is not possible to directly call a method on the value, as in
+<code>Enum::A._to_string()</code>. This problem is addressed by operator <code>+</code> below.</p>
+<h4>non-member constexpr Enum unary operator +(_enumerated)</h4>
+<p>Forces promotion of <code>Enum::_enumerated</code> to <code>Enum</code>. Provided to solve the problem
+described under <code>_enumerated</code> above. So, for example, it is necessary to write
+<code>(+Enum::A)._to_string()</code> instead of <code>Enum::A._to_string</code>.</p>
+<h4>constexpr implicit constructor Enum(_enumerated)</h4>
+<p>A constructor that performs implicit conversions of <code>Enum::_enumerated</code> to
+<code>Enum</code>. This allows code to use a literal constant where <code>Enum</code> is expected in
+most situations &mdash; those where the compiler can do an implicit conversion.
+For example, if there is a function <code>void output(Enum)</code>, it can be called as
+<code>output(Enum::A)</code>, without having to write <code>output(+Enum::A)</code>. This constructor
+is also used for the typical initialization</p>
+<pre>Enum    value = Enum::A;</pre><p>The other constructors of <code>Enum</code> are the implicitly-generated copy and move
+constructors. There is no default constructor.</p>
+<h4>static constexpr size_t _size</h4>
+<p>The number of constants declared. <code>Enum::_size == 3</code>.</p>
+<h4>typedef _value_iterable</h4>
+<p>Type of object that permits iteration over the constants. Has at least
+<code>constexpr</code> <code>begin()</code>, <code>end()</code>, and <code>size()</code> methods, and <code>operator[]</code>.
+Iteration visits each declared constant, even if multiple constants have the
+same value, and visits them in order of declaration. See usage examples under
+<code>_values</code>.</p>
+<h4>typedef _value_iterator</h4>
+<p>Random-access iterator type for <code>_value_iterable</code>. Most operations, including
+dereferencing, are <code>constexpr</code>. The exceptions are mutating operators such as
+<code>operator++</code>. In <code>constexpr</code> code, that can be replaced with addition of <code>1</code>.</p>
+<h4>static constexpr _value_iterable _values()</h4>
+<p><code>constexpr</code> access to the collection of declared constants. For example:</p>
+<pre>for (size_t index = 0; index &lt; Enum::_values().size(); ++index)
+    output(Enum::_values()[index]);</pre><p>or, using iterators:</p>
+<pre>for (Enum::_value_iterator iterator = Enum::_values().begin();
+     iterator != Enum::_values().end(); ++iterator) {
+
+    output(*iterator);
+}</pre><p>or, in <span class="cpp">C++</span><span class="eleven">11</span>:</p>
+<pre>for (Enum value : Enum::_values())
+    output(value);</pre><h4>non-member struct better_enums::optional<Enum></h4>
+<p>Optional <code>Enum</code> value. An optional value <code>maybe</code> can be in one of two states:</p>
+<ul>
+<li><code>(bool)maybe == true</code>, meaning that there is <code>Enum</code> value, and <code>*maybe</code>
+evaluates to it, and</li>
+<li><code>(bool)maybe == false</code>, meaning no <code>Enum</code> value is available.</li>
+</ul>
+<p>This type is referred to as simply <code>optional</code> in the rest of the reference, as
+if <code>using better_enums::optional;</code> has been entered.</p>
+<h3>Strings</h3>
+<h4>member constexpr? const char* _to_string() const</h4>
+<p>Returns the string representation of the Better Enum value on which it is
+called. For example, if <code>value == Enum::A</code>, <code>value._to_string()</code> is the same
+string as <code>"A"</code>.</p>
+<p>If two constants have the same numeric representation, and <code>value</code> is equal to
+one of those constants, then it has that numeric representation, and it is
+undefined which constant's name <code>_to_string</code> will choose.</p>
+<p>If <code>value</code> is not equal to the representation of any declared constant, for
+example if it was obtained using an unchecked cast such as:</p>
+<pre>Enum    value = Enum::_from_integral_unchecked(0xbadc0de);</pre><p>then the behavior of <code>value._to_string</code> is undefined.</p>
+<p>Runnig time is linear in the number of declared constants.</p>
+<p>This method is not <code>constexpr</code> by default because making it so entails a large
+slowdown during compilation. <a href="">See here</a> for how to make it <code>constexpr</code> for
+some or all Better Enums.</p>
+<h4>static constexpr Enum _from_string(const char*)</h4>
+<p>If the given string is the exact name of a declared constant, returns its value.
+Otherwise, throws <code>std::runtime_error</code>. Running time is linear in the number of
+declared constants multiplied by the length of the longest constant.</p>
+<h4>static constexpr optional<Enum> _from_string_nothrow(const char*)</h4>
+<p>The same as <code>_from_string</code>, but does not throw an exception on failure. Returns
+an <a href="">optional</a> value instead.</p>
+<h4>static constexpr Enum _from_string_nocase(const char*)</h4>
+<p>The same as <code>_from_string</code>, but comparison is up to case, in the usual sense in
+the Latin-1 encoding.</p>
+<h4>static constexpr optional<Enum> _from_string_nocase_nothrow(const char*)</h4>
+<p>Is to <code>_from_string_nocase</code> as <code>_from_string_nothrow</code> is to <code>_from_string</code>.</p>
+<h4>static constexpr bool _is_valid(const char*)</h4>
+<p>Evaluates to <code>true</code> if and only if the given string is the exact name of a
+declared constant. Running time is the same as for <code>_from_string</code>.</p>
+<h4>static constexpr bool _is_valid_nocase(const char*)</h4>
+<p>The same as <code>_is_valid</code>, but comparison is done up to case as in
+<code>_from_string_nocase</code>.</p>
+<h4>static constexpr const char* _name()</h4>
+<p>Evaluates to the name of the Better Enum type. <code>Enum::_name()</code> is the same
+string as <code>"Enum"</code>.</p>
+<h4>typedef _name_iterable</h4>
+<p>Type of object that permits iteration over names of declared constants. Has at
+least <code>constexpr</code> <code>begin()</code>, <code>end()</code>, and <code>size()</code> methods. <code>operator[]</code> is also
+available, but is <code>constexpr</code> if and only if <code>_to_string</code> is <code>constexpr</code>.
+Iteration visits constants in order of declaration. See usage example under
+<code>_names</code>.</p>
+<h4>typedef _name_iterator</h4>
+<p>Random-access iterator type for <code>_name_iterable</code>. Most operations are
+<code>constexpr</code>, but dereferencing is <code>constexpr</code> if and only if <code>_to_string</code> is
+<code>constexpr</code>. Mutating operators such as <code>operator++</code> are not <code>constexpr</code> due to
+their nature &mdash; adding <code>1</code> is a <code>constexpr</code> alternative.</p>
+<h4>static constexpr? _name_iterable _names()</h4>
+<p>Access to the collection of declared constant names. For example:</p>
+<pre>for (size_t index = 0; index &lt; Enum::_names().size(); ++index)
+    std::cout &lt;&lt; Enum::_names()[index] &lt;&lt; std::endl;</pre><p>or, using iterators:</p>
+<pre>for (Enum::_name_iterator iterator = Enum::_names().begin();
+     iterator != Enum::_names().end(); ++iterator) {
+
+    std::cout &lt;&lt; *iterator &lt;&lt; std::endl;
+}</pre><p>or, in <span class="cpp">C++</span><span class="eleven">11</span>:</p>
+<pre>for (const char *name : Enum::_names())
+    std::cout &lt;&lt; name &lt;&lt; std::endl;</pre><p><code>constexpr</code> if and only if <code>_to_string</code> is <code>constexpr</code>.</p>
+<h3>Integers</h3>
+<h4>typedef _integral</h4>
+<p>The <em>underlying</em> or <em>representation</em> type of the Better Enum. For example,
+<code>Enum::_integral</code> is the same type as <code>int</code>. Each Better Enum has the same size
+and alignment requirement as its representation type. This is true even under
+<span class="cpp">C++</span><span class="eleven">98</span>.</p>
+<h4>member constexpr _integral _to_integral() const</h4>
+<p>No-op conversion of a Better Enum to a value of its representation type. For
+example, <code>(+Enum::C)._to_integral() == 2</code>.</p>
+<h4>static constexpr Enum _from_integral(_integral)</h4>
+<p>Checked conversion of an integer to a Better Enum value. The check runs in time
+linear in the number of declared constants, but the conversion itself is a
+no-op. Throws <code>std::runtime_error</code> if the given integer is not the numeric value
+of one of the declared constants.</p>
+<h4>static constexpr Enum _from_integral_unchecked(_integral)</h4>
+<p>No-op unchecked conversion of an integer to a Better Enum value. If the given
+integer is not the numeric value of one of the declared constants, the behavior
+of all subsequent operations on the Better Enum value is undefined.</p>
+<h4>static constexpr optional<Enum> _from_integral_nothrow(_integral)</h4>
+<p>Checked conversion as <code>_from_integral</code>, but does not throw an exception on
+failure. Returns an <a href="">optional</a> value instead.</p>
+<h4>static constexpr bool _is_valid(_integral)</h4>
+<p>Evaluates to `true if and only if the given integer is the numeric value of one
+of the declared constants.</p>
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

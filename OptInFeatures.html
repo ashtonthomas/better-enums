@@ -1,0 +1,144 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Opt-in features</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/OptInFeatures.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="index.html">Home</a>
+    <a href="tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<h2>Opt-in features</h2>
+<p>Better Enums has a few opt-in features that affect how enums are generated. The
+default configuration is suitable for general use, but you might have more
+stringent requirements. This page describes the optional features and how to
+enable them.</p>
+<h3>Strict conversions</h3>
+<p>Each Better Enum is implicitly convertible to its member <code>enum _enumerated</code>
+type. This is meant to support usage of Better Enums directly in <code>switch</code>
+statements. When you write</p>
+<pre>switch (channel) {
+    ...
+}</pre><p>the compiler applies the implicit conversion, and is also able to do case
+exhaustiveness checking. Unfortunately, <code>_enumerated</code> is always a regular <span class="cpp">C++</span><span class="eleven">98</span>
+enum type, meaning that it has standard conversions to integral types. The end
+result is <code>channel</code> is implicitly convertible all the way to <code>int</code> &mdash;
+behavior that is often considered a violation of type safety.</p>
+<p>In <span class="cpp">C++</span><span class="eleven">11</span>, you can force Better Enums to declare an internal <code>enum class</code> type
+to use for <code>switch</code> statements. Each enum will then be only convertible to its
+<code>enum class</code>, and won't be implicitly convertible to integers. This is done by
+defining <code>BETTER_ENUMS_STRICT_CONVERSION</code> before including <code>enum.h</code>. You would
+typically do this on the compiler's command line.</p>
+<p>The reason strict conversions aren't enabled by default in <span class="cpp">C++</span><span class="eleven">11</span> is that doing
+so would break compatibility with the <span class="cpp">C++</span><span class="eleven">98</span> interface.</p>
+<ul>
+<li>The "weaker" incompatibility is that you could write a bunch of <span class="cpp">C++</span><span class="eleven">98</span> code
+that relies on implicit integer conversions, and then try to switch to
+<span class="cpp">C++</span><span class="eleven">11</span>. The code would then fail to compile. An example where implicit
+conversions are an "advantage" is when using Better Enums as arguments to
+the methods of <code>std::bitset</code>. I could have ignored this problem by declaring
+usage of implicit integer conversions unsupported, but in light of the next
+issue, I decided not to do that.</li>
+<li>The "stronger" incompatibility is a difference in how <code>switch</code> cases must be
+written. The syntaxes for the two variants, implicitly-converting and
+strict, are mutually exclusive.</li>
+</ul>
+<p>Here they are:</p>
+<pre>// Default variant
+switch (channel) {
+    case Channel::Red:   break;
+    case Channel::Green: break;
+    case Channel::Blue:  break;
+}
+
+// Strict variant
+switch (channel) {
+    case +Channel::Red:   break;
+    case +Channel::Green: break;
+    case +Channel::Blue:  break;
+}</pre><p>I would be very happy to make conversion to <code>enum class</code> the default whenever
+<code>enum class</code> is available, but how to do so without breaking compatibility is so
+far an open problem.</p>
+<h3>Compile-time name trimming</h3>
+<p>Better Enums is able to do all of its work at compile time. There is one task,
+however, at which my current method is pretty slow on modern compilers. The
+performance is still reasonable, but it makes enums take about four times longer
+to compile, compared to deferring the task to program startup. The task is
+trimming stringized constant names.</p>
+<p>The problem arises when the preprocessor stringizes an initializer. For example,</p>
+<pre>ENUM(Channel, int, Red = 1, Green, Blue);</pre><p>results in an internal array, somewhere inside the generated Better Enum, that
+looks like</p>
+<pre>names = {"Red = 1", "Green", "Blue"}</pre><p>Before the name of <code>Channel::Red</code> can be returned to the user, the initializer
+<code>= 1</code> must be trimmed off. This is the part that is slow to compile, and is
+deferred to startup by default.</p>
+<p>If you want to enable it at compile time, you have two options. The first is to
+use an alternative <code>SLOW_ENUM</code> macro to declare your enum. It will enable
+compile-time trimming for that enum only. If you only do this for a few enums,
+you probably won't notice the difference in compilation time.</p>
+<p>You can also enable compile-time trimming globally for all enums by defining
+<code>BETTER_ENUMS_CONSTEXPR_TO_STRING</code> before including <code>enum.h</code>. Typically, you
+would do this by supplying a command-line argument to your compiler.</p>
+<p>The result of doing either one is that <code>_to_string</code> and <code>_names</code> will become
+<code>constexpr</code> for your compile-time enjoyment.</p>
+<p>The reason this option is not enabled by default when avaialble, besides the
+fact that the current implementation is slow, is that I don't believe most users
+need it most of the time.</p>
+<p>As a note, the performance is not <em>that</em> bad. You still have to define on the
+order of 10+ slow enums in order to slow compilation down as much as merely
+including <code>iostream</code> does. However, it is shockingly slower than the faster
+implementation, where you have the leeway to define 40+ enums before you reach
+the same level of slowdown as <code>iostream</code> gives you.</p>
+<p>There are enough other problems with slow enums, however, like potential symbol
+pollution in the final binaries, that I decided to leave them as an opt-in
+feature until they improve to the point where they can be the default.</p>
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

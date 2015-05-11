@@ -1,0 +1,99 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Safe switch</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/tutorial/SafeSwitch.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  Welcome to the Better Enums tutorials! The code in this tutorial forms a
+  valid program, which you can <a href="https://github.com/aantron/better-enums/blob/master/example/4-switch.cc">download</a> and play with.
+</p>
+
+<h2>Safe switch</h2>
+<p>A Better Enum can be used directly in a <code>switch</code> statement:</p>
+<pre>#include &lt;iostream&gt;
+<em>#include &lt;enum.h&gt;</em>
+
+<em>ENUM(Channel, int, Red, Green, Blue)</em>
+
+int main()
+{
+    Channel     channel = Channel::Green;
+    int         n;
+
+    <em>switch </em>(<em>channel</em>) {
+        <em>case Channel::Red</em>:   n = 13; break;
+        <em>case Channel::Green</em>: n = 37; break;
+        <em>case Channel::Blue</em>:  n = 42; break;
+    }</pre><p>If you miss a case or add a redundant one, your compiler should be able to give
+you a warning &mdash; try it!</p>
+<hr>
+<pre>    std::cout &lt;&lt; n &lt;&lt; std::endl;
+    return 0;
+}</pre>
+
+<section class="tutorial-footer">
+  <p class="next">
+    Continue to the next tutorial: <a href="../tutorial/ScopeAndSafety.html">Scope and safety</a>
+  </p>
+
+  <p class="up">
+    Or, return to the <a href="../index.html">home page</a>.
+  </p>
+</section>
+
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

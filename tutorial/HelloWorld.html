@@ -1,0 +1,95 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Hello, World!</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/tutorial/HelloWorld.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  Welcome to the Better Enums tutorials! The code in this tutorial forms a
+  valid program, which you can <a href="https://github.com/aantron/better-enums/blob/master/example/1-hello-world.cc">download</a> and play with.
+</p>
+
+<h2>Hello, World!</h2>
+<p>Download <a href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>enum.h</a>, then build this program with it:</p>
+<pre>#include &lt;iostream&gt;
+<em>#include "enum.h"</em>
+
+<em>ENUM(Word, int, Hello, World)</em>
+
+int main()
+{
+    std::cout &lt;&lt; <em>(+Word::Hello)._to_string()</em> &lt;&lt; ", "
+              &lt;&lt; <em>(+Word::World)._to_string()</em> &lt;&lt; "!"
+              &lt;&lt; std::endl;
+
+    return 0;
+}</pre><p>Run it, and you should see the output "Hello, World!"</p>
+<p>Congratulations, you have just created your first Better Enum!</p>
+
+
+<section class="tutorial-footer">
+  <p class="next">
+    Continue to the next tutorial: <a href="../tutorial/Conversions.html">Conversions</a>
+  </p>
+
+  <p class="up">
+    Or, return to the <a href="../index.html">home page</a>.
+  </p>
+</section>
+
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

@@ -1,0 +1,106 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Bit sets</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/demo/BitSets.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  The code on this page is an advanced demo of Better Enums. You can
+  <a href="https://github.com/aantron/better-enums/blob/master/example/102-bitset.cc">download</a> it and try it out.
+</p>
+
+<h2>Bit sets</h2>
+<p>If you want to use <code>std::bitset</code> or a similar library to use enums as keys into
+a bit set, you need to know the number of bits at compile time. You can easily
+automate this with Better Enums, even when constants are not declared in
+increasing order.</p>
+<hr>
+<p>We simply need to find the maximum value of any given enum type.</p>
+<pre>#include &lt;bitset&gt;
+#include &lt;enum.h&gt;
+
+template &lt;typename Enum&gt;
+constexpr Enum max_loop(Enum accumulator, size_t index)
+{
+    return
+        index &gt;= Enum::_size ? accumulator :
+        Enum::_values()[index] &gt; accumulator ?
+            max_loop&lt;Enum&gt;(Enum::_values()[index], index + 1) :
+            max_loop&lt;Enum&gt;(accumulator, index + 1);
+}
+
+template &lt;typename Enum&gt;
+constexpr Enum max()
+{
+    return max_loop&lt;Enum&gt;(Enum::_values()[0], 1);
+}</pre><p>And use that to declare a bit set template:</p>
+<pre>template &lt;typename Enum&gt;
+using EnumSet = std::bitset&lt;max&lt;Enum&gt;()._to_integral() + 1&gt;;</pre><p>Then rest is straightforward. The only issue is that, in <span class="cpp">C++</span><span class="eleven">11</span>, it is necessary
+to keep calling <code>to_integral</code> on the enums when passing them to <code>bitset</code>
+functions. You may want to implement a more enum-friendly bit set type, or
+overload unary <code>operator -</code>.</p>
+<pre>ENUM(Channel, int, Red, Green, Blue)
+ENUM(Depth, int, TrueColor = 1, HighColor = 0)
+
+int main()
+{
+    EnumSet&lt;Channel&gt;    channels;
+    EnumSet&lt;Depth&gt;      depths;
+
+    return 0;
+}</pre>
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

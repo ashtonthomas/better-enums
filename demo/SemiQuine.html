@@ -1,0 +1,163 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Semi-quine</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/demo/SemiQuine.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  The code on this page is an advanced demo of Better Enums. You can
+  <a href="https://github.com/aantron/better-enums/blob/master/example/103-quine.cc">download</a> it and try it out.
+</p>
+
+<h2>Semi-quine</h2>
+<p>Let's make a Better Enum compose its own definition. It won't be literally as
+defined, since we will lose some information about initializers, but we will be
+able to preserve their numeric values. We will reserve the memory buffers at
+compile time.</p>
+<p>There are actually better ways to do this than shown here. You could define a
+macro that expands to an <code>ENUM</code> declaration and also stringizes it. The point
+here is to show some of the reflective capabilities of Better Enums, so you can
+adapt them for cases where a macro is not sufficient.</p>
+<pre>#include &lt;cassert&gt;
+#include &lt;cstdio&gt;
+#include &lt;iostream&gt;
+
+#define BETTER_ENUMS_CONSTEXPR_TO_STRING
+
+#include &lt;enum.h&gt;
+
+#define HIGH_COLOR  0
+
+ENUM(Channel, int, Red, Green, Blue)
+ENUM(Depth, int, TrueColor = 1, HighColor = HIGH_COLOR)</pre><p>First, we need to be able to get the length of each definition above. We will
+assume that the underlying type is always <code>int</code>, and that the spacing convention
+is followed as above. This allows us to write:</p>
+<pre>constexpr size_t value_length(int n, int bound = 10, size_t digits = 1)
+{
+    return
+        n &lt; bound ? digits : value_length(n, bound * 10, digits + 1);
+}
+
+constexpr size_t string_length(const char *s, size_t index = 0)
+{
+    return s[index] == '\0' ? index : string_length(s, index + 1);
+}
+
+template &lt;typename Enum&gt;
+constexpr size_t constants_length(size_t index = 0, size_t accumulator = 0)
+{
+    return
+        index &gt;= Enum::_size ? accumulator :
+
+        constants_length&lt;Enum&gt;(
+            index + 1, accumulator
+                        + string_length(", ")
+                        + string_length(Enum::_names()[index])
+                        + string_length(" = ")
+                        + value_length(
+                            Enum::_values()[index]._to_integral()));
+}
+
+template &lt;typename Enum&gt;
+constexpr size_t declaration_length()
+{
+    return
+        string_length("ENUM(")
+        + string_length(Enum::_name())
+        + string_length(", int")
+        + constants_length&lt;Enum&gt;()
+        + string_length(")");
+}</pre><p>Now, we can declare:</p>
+<pre>char    channel_definition[declaration_length&lt;Channel&gt;() + 1];
+char    depth_definition[declaration_length&lt;Depth&gt;() + 1];</pre><p>And finally, the formatting function:</p>
+<pre>template &lt;typename Enum&gt;
+size_t format(char *buffer)
+{
+    size_t  offset = 0;
+
+    offset += std::sprintf(buffer, "ENUM(%s, int", Enum::_name());
+
+    for (Enum value : Enum::_values()) {
+        offset +=
+            std::sprintf(buffer + offset,
+                         ", %s = %i",
+                         value._to_string(), value._to_integral());
+    }
+
+    offset += std::sprintf(buffer + offset, ")");
+
+    return offset;
+}
+
+int main()
+{
+    size_t  channel_length = format&lt;Channel&gt;(channel_definition);
+    assert(channel_length + 1 == sizeof(channel_definition));
+
+    size_t  depth_length = format&lt;Depth&gt;(depth_definition);
+    assert(depth_length + 1 == sizeof(depth_definition));
+
+    std::cout &lt;&lt; channel_definition &lt;&lt; std::endl;
+    std::cout &lt;&lt; depth_definition &lt;&lt; std::endl;
+
+    return 0;
+}</pre><p>This outputs:</p>
+<pre class="comment">ENUM(Channel, int, Red = 0, Green = 1, Blue = 2)
+ENUM(Depth, int, TrueColor = 1, HighColor = 0)</pre><p>This does have the advantage of not depending on anything else defined in the
+program, which isn't as easy to achieve with stringization.</p>
+
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

@@ -1,0 +1,160 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Special values</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/demo/SpecialValues.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  The code on this page is an advanced demo of Better Enums. You can
+  <a href="https://github.com/aantron/better-enums/blob/master/example/101-special-values.cc">download</a> it and try it out.
+</p>
+
+<h2>Special values</h2>
+<p>Suppose your project has a convention where each enum has special <em>invalid</em> and
+<em>default</em> values. With Better Enums, you can encode that directly at compile
+time, and then access each enum's special values using syntax like
+<code>Channel c = default_</code> and <code>Channel c = invalid</code>. This can make your code adapt
+automatically to changes in enum definitions, as well as make it easier to read
+and understand its intent.</p>
+<hr>
+<pre>#include &lt;iostream&gt;
+#include &lt;stdexcept&gt;
+<em>#include &lt;enum.h&gt;</em></pre><h3>Invalid</h3>
+<p>Perhaps the invalid value is usually called <code>Invalid</code>, but not in all enums. You
+can encode that using a function template for the common case, and a macro that
+creates specializations:</p>
+<pre><em>template</em> &lt;<em>typename Enum</em>&gt;
+constexpr Enum find_invalid() { return Enum::Invalid; }
+
+<em>#define OVERRIDE_INVALID</em>(<em>Enum</em>, <em>Value</em>)                 \
+template&lt;&gt;                                            \
+constexpr Enum <em>find_invalid&lt;Enum&gt;</em>() { return <em>Enum::Value</em>; }</pre><p>Now, you can declare enums like these:</p>
+<pre>ENUM(<em>Channel</em>, int, Red, Green, Blue, <em>Invalid</em>)
+
+ENUM(<em>Compression</em>, int, <em>Undefined</em>, None, Huffman)
+<em>OVERRIDE_INVALID</em>(<em>Compression</em>, <em>Undefined</em>)</pre><p>and use them:</p>
+<pre>static_assert(<em>find_invalid</em>&lt;<em>Channel</em>&gt;() == <em>+Channel::Invalid</em>, "");
+static_assert(<em>find_invalid</em>&lt;<em>Compression</em>&gt;() == <em>+Compression::Undefined</em>, "");</pre><p>This even supports enums that don't have an invalid value at all. As long as
+they don't have a constant called <code>Invalid</code>, you will get a compile-time error
+if you try to call <code>invalid()</code> on them &mdash; as you probably should!</p>
+<h3>Default</h3>
+<p>To encode the policy on default values, we need to do a compile-time check that
+the first value is not invalid. Otherwise, the technique is the same.</p>
+<pre>template &lt;typename Enum&gt;
+constexpr Enum find_default()
+{
+    return
+        Enum::_size &lt; 2 ?
+            throw std::logic_error("enum has no valid constants") :
+        Enum::_values()[0] == find_invalid&lt;Enum&gt;() ?
+            Enum::_values()[1] :
+            Enum::_values()[0];
+}
+
+#define OVERRIDE_DEFAULT(Enum, Value)                  \
+static_assert(Enum::Value != Enum::Invalid,            \
+              #Enum ": default cannot equal invalid"); \
+template&lt;&gt;                                             \
+constexpr Enum find_default&lt;Enum&gt;() { return Enum::Value; }</pre><p>Usage:</p>
+<pre>static_assert(find_default&lt;Channel&gt;() == +Channel::Red, "");
+static_assert(find_default&lt;Compression&gt;() == +Compression::None, "");</pre><p>And, if you do</p>
+<pre>ENUM(Answer, int, Yes, No, Invalid)
+// OVERRIDE_DEFAULT(Answer, Invalid)</pre><p>you will get a helpful compile-time error saying
+<code>Answer: default cannot equal invalid</code>.</p>
+<h3>Making the syntax nicer</h3>
+<p>For the final touch, we will make the syntax better by introducing new
+"keywords" called <code>default_</code> and <code>invalid</code> in such a way that we cause the
+compiler to do type inference:</p>
+<pre>template &lt;typename Enum&gt;
+struct assert_enum {
+    using check = typename Enum::_enumerated;
+    using type = Enum;
+};
+
+struct invalid_t {
+    template &lt;typename To&gt;
+    constexpr operator To() const { return find_invalid&lt;To&gt;(); }
+
+    template &lt;typename To&gt;
+    constexpr To convert() const { return find_invalid&lt;To&gt;(); }
+};
+
+struct default_t {
+    template &lt;typename To&gt;
+    constexpr operator To() const { return find_default&lt;To&gt;(); }
+};
+
+constexpr invalid_t     invalid{};
+constexpr default_t     default_{};
+
+static_assert(+Channel::Invalid == invalid, "");
+static_assert(+Compression::Undefined == invalid, "");
+
+static_assert(+Channel::Red == default_, "");
+static_assert(+Compression::None == default_, "");</pre><p>We can now have nice code such as this:</p>
+<pre>int main()
+{
+    Channel     channel = default_;
+    std::cout &lt;&lt; channel._to_string() &lt;&lt; std::endl;
+
+    return 0;
+}</pre><hr>
+<p>There are many possible variations of these policies, but I think most of them
+can be encoded in a reasonable fashion using the tools Better Enums provides.
+Enjoy!</p>
+
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

@@ -1,0 +1,148 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Scope and safety</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/tutorial/ScopeAndSafety.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  Welcome to the Better Enums tutorials! The code in this tutorial forms a
+  valid program, which you can <a href="https://github.com/aantron/better-enums/blob/master/example/5-safety.cc">download</a> and play with.
+</p>
+
+<h2>Scope and safety</h2>
+<p>This tutorial shows some of the safety features of Better Enums: scope, how to
+control conversions, and the lack of a default constructor.</p>
+<h3>Scope</h3>
+<p>You have probably noticed by now that Better Enums are scoped: when you declare</p>
+<pre>#include &lt;cassert&gt;
+<em>#include &lt;enum.h&gt;</em>
+
+<em>ENUM(Channel, int, Red = 1, Green, Blue)</em></pre><p>you don't get names such as <code>Red</code> in the global namespace. Instead, you get
+<code>Channel</code>, and <code>Red</code> is accessible as <code>Channel::Red</code>. This is no big deal in
+<span class="cpp">C++</span><span class="eleven">11</span>, which has <code>enum class</code>. In <span class="cpp">C++</span><span class="eleven">98</span>, however, this typically requires
+effort. Better Enums brings scope uniformly to both variants. So, despite the
+above declaration, you can safely declare</p>
+<pre><em>ENUM(Node, char, Red, Black)</em></pre><p>and everything will work as expected.</p>
+<pre>int main()
+{
+    assert((+<em>Channel::Red</em>)._to_integral() <em>!=</em> (+<em>Node::Red</em>)._to_integral());</pre><h3>Implicit conversion</h3>
+<p>A major complaint in <span class="cpp">C++</span><span class="eleven">98</span> is that <code>enums</code> are implicitly convertible to
+integers. Unfortunately, that is also true of Better Enums, and I haven't found
+a way to forbid the conversions and still have switch case checking.</p>
+<p>Better Enums can be made as safe as <code>enum class</code> in <span class="cpp">C++</span><span class="eleven">11</span>, however. If your
+compiler supports <code>enum class</code> and you define
+<code>BETTER_ENUMS_STRICT_CONVERSION</code> before including <code>enum.h</code>, the following code
+will not compile:</p>
+<pre class="comment">    Channel     channel = Channel::Red;
+    int         n = channel;</pre><p>The reason you have to opt into this feature with a macro is because it breaks
+compatibility with the <span class="cpp">C++</span><span class="eleven">98</span> version of Better Enums. Specifically, when
+writing a switch statement, you now have to do</p>
+<pre class="comment">    switch (channel) {
+        case <em>+</em>Channel::Red:   return 13;
+        case <em>+</em>Channel::Green: return 37;
+        case <em>+</em>Channel::Blue:  return 42;
+    }</pre><p>The difference is the explicit promotion with <code>+</code>. And, of course, if you had a
+bunch of code that relies on implicitly converting <span class="cpp">C++</span><span class="eleven">98</span> Better Enums to
+integers, it would break when switching to <span class="cpp">C++</span><span class="eleven">11</span> if strict conversions were the
+default.</p>
+<h3>Default constructor</h3>
+<p>Better Enums don't have a default constructor, for three reasons.</p>
+<ul>
+<li>Better Enums is a library that can't know what your application would like
+the default value to be for each enum, or whether you even want one.</li>
+<li>I chose not to leave the default value undefined, because the idea is to
+encourage the convention that whenever a Better Enum exists, it has a valid
+value. This is borrowed from typed functional programming.</li>
+<li>Better Enums is still under development, and this option is the most
+future-proof.</li>
+</ul>
+<p>So, if you uncomment this code, the file won't compile:</p>
+<pre>    // Channel      channel;</pre><p>This may seem very strict, and I may relax it in the future. However, my guess
+is that there are few places where a default constructor is truly needed.</p>
+<ul>
+<li>If you want to opt in to a notion of default values, you can encode your
+project's policy into <span class="cpp">C++</span> templates with ease, using building blocks Better
+Enums provides. The solution sketched
+<a href="../demo/SpecialValues.html">here</a> is arguably more flexible than any
+fixed choice Better Enums could impose on you.</li>
+<li>If a Better Enum value is the result of a large sequence of statements,
+you may be able to move those statements into a separate function that
+returns the value, and call it to initialize the Better Enum.</li>
+<li>If you need to reserve memory for a Better Enum before it is created, you
+can do so by declaring a value of type <code>Enum::_integral</code>, as described in
+the <a href="../tutorial/RepresentationAndAlignment.html">next tutorial</a>.</li>
+<li>I may add an ability to extend Better Enums, in which case you could add a
+default constructor on a per-type or global basis and have it do anything
+you want. I'd be glad to hear any feedback about your actual usage and
+needs.</li>
+<li>Finally, Better Enums is under the BSD license so you can fork it and change
+it directly, though of course this can have some administration overhead.</li>
+</ul>
+<hr>
+<pre>}</pre>
+
+<section class="tutorial-footer">
+  <p class="next">
+    Continue to the next tutorial: <a href="../tutorial/RepresentationAndAlignment.html">Representation and alignment</a>
+  </p>
+
+  <p class="up">
+    Or, return to the <a href="../index.html">home page</a>.
+  </p>
+</section>
+
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

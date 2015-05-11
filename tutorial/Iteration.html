@@ -1,0 +1,109 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Iteration</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/tutorial/Iteration.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="../better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="../index.html">Home</a>
+    <a href="../tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="../index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<p>
+  Welcome to the Better Enums tutorials! The code in this tutorial forms a
+  valid program, which you can <a href="https://github.com/aantron/better-enums/blob/master/example/3-iterate.cc">download</a> and play with.
+</p>
+
+<h2>Iteration</h2>
+<p>Better Enums makes it easy to iterate over the values you have declared. For
+example, this:</p>
+<pre>#include &lt;iostream&gt;
+#include &lt;enum.h&gt;
+
+<em>ENUM(Channel, int, Red, Green = 2, Blue)</em>
+
+int main()
+{
+
+    <em>for</em> (<em>size_t index = 0</em>; <em>index &lt; Channel::_size</em>; <em>++index</em>) {
+        Channel     channel = <em>Channel::_values()[index]</em>;
+        std::cout &lt;&lt; channel._to_integral() &lt;&lt; " ";
+    }
+    std::cout &lt;&lt; std::endl;</pre><p>will print "0 2 3". And this:</p>
+<pre>    <em>for</em> (<em>size_t index = 0</em>; <em>index &lt; Channel::_size</em>; <em>++index</em>) {
+        const char  *name = <em>Channel::_names()[index]</em>;
+        std::cout &lt;&lt; name &lt;&lt; " ";
+    }
+    std::cout &lt;&lt; std::endl;</pre><p>will print "Red Green Blue".</p>
+<hr>
+<p>If you are using <span class="cpp">C++</span><span class="eleven">11</span>, you can have much nicer syntax:</p>
+<pre class="comment">        <em>for (Channel channel : Channel::_values())</em>
+            std::cout &lt;&lt; <em>channel._to_integral()</em> &lt;&lt; " ";
+        std::cout &lt;&lt; std::endl;
+
+        <em>for (const char *name : Channel::_names())</em>
+            std::cout &lt;&lt; <em>name</em> &lt;&lt; " ";
+        std::cout &lt;&lt; std::endl;</pre><hr>
+<pre>    return 0;
+}</pre>
+
+<section class="tutorial-footer">
+  <p class="next">
+    Continue to the next tutorial: <a href="../tutorial/SafeSwitch.html">Safe switch</a>
+  </p>
+
+  <p class="up">
+    Or, return to the <a href="../index.html">home page</a>.
+  </p>
+</section>
+
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+

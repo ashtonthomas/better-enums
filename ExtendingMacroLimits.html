@@ -1,0 +1,102 @@
+<!-- Automatically generated - edit the templates! -->
+
+<!DOCTYPE html>
+
+<html>
+<head>
+
+<title>Extending macro limits</title>
+
+<link rel="canonical" href="http://aantron.github.io/better-enums/current/ExtendingMacroLimits.html" />
+
+<meta name="author" content="Anton Bachin" />
+
+<meta name="viewport" content="width=device-width" />
+
+<link rel="stylesheet" href="better-enums.css" />
+
+</head>
+<body>
+
+<nav>
+  <div>
+    <a class="first" href="https://raw.githubusercontent.com/aantron/better-enums/master/enum.h"
+download>Download</a>
+    <a href="https://github.com/aantron/better-enums">GitHub</a>
+    <a href="index.html">Home</a>
+    <a href="tutorial/HelloWorld.html">Tutorial</a>
+    
+    
+    
+  </div>
+</nav>
+
+<div class="spacer">&nbsp;</div>
+
+<header>
+  <div class="back">{}</div>
+
+  <h1><a href="index.html">Better Enums</a></h1>
+  <h2>Fast, intuitive enums for <span class="cpp">C++</span></h2>
+  <h3>Open-source under the BSD license</h3>
+</header>
+
+<main>
+
+
+<h2>Extending macro limits</h2>
+<p>The <code>ENUM</code> macro makes heavy use of the preprocessor. The preprocessor can't
+perform intelligent operations on sequences of tokens with arbitrary lengths
+&mdash; the operations must be bounded. The result is that there are two size
+limits: on the number of constants that a Better Enum can have, and on the
+maximum length of a constant name under certain conditions. If you run into
+either of these limits, follow the steps on this page to increase them.</p>
+<p>The conditions for the constant name length limit rarely apply. They are:</p>
+<ul>
+<li>you are compiling an enum with compile-time string trimming, a.k.a. a
+"slow enum", which is only enabled when you do <a href="">this</a>, and</li>
+<li>you have a constant with an initializer.</li>
+</ul>
+<p>Constants without initializers can always have arbitrarily-long names.</p>
+<p>The default limits are 64 constants and 23 characters for names of slow enum
+constants that have initializers. To extend these limits:</p>
+<ol>
+<li>Pick your desired limits. I will use 512 constants and 63 characters as an
+example. Add 1 to the number of characters to account for the null
+terminator &mdash; our numbers are now 512 and 64.</li>
+<li>Get <code>make_macros.py</code> from your copy of the Better Enums distribution or
+from <a href="">GitHub</a>.</li>
+<li>You will run this script to generate a header file containing some
+replacement macros for <code>enum.h</code> to use. Pick a name for this file and a
+location somewhere in your include path. I will assume that this file is
+<code>common/enum_macros.h</code>.</li>
+<li>Run <code>python make_macros.py 512 64 &gt; common/enum_macros.h</code>.</li>
+<li><p>Define <code>BETTER_ENUMS_MACRO_FILE &lt;common/enum_macros.h&gt;</code> before including
+<code>enum.h</code>. This is typically done by supplying extra flags to the compiler
+on the command line:</p>
+<ul>
+<li>For g++ and clang++, <code>-DBETTER_ENUMS_MACRO_FILE='&lt;common/enum_macros.h&gt;'</code></li>
+<li>For VC++, <code>\DBETTER_ENUMS_MACRO_FILE='&lt;common/enum_macros.h&gt;'</code></li>
+</ul>
+</li>
+<li><p>Enjoy the looser limits. Just watch out &mdash; increasing the second
+number can really slow down compilation of compile-time trimming enums.</p>
+</li>
+<li>You don't need <code>make_macros.py</code> anymore. It's not part of your build
+process and you can delete it.</li>
+</ol>
+
+
+</main>
+
+<footer>
+  Copyright &copy; 2015 Anton Bachin. Released under the BSD 2-clause license.
+  See <a href="https://github.com/aantron/better-enums/blob/master/LICENSE">
+  LICENSE</a>.
+  <br />
+  This page is part of the documentation for Better Enums master.
+</footer>
+
+</body>
+</html>
+
